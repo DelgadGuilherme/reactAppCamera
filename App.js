@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, Modal, Image } from 'react-native';
 import { Camera } from 'expo-camera';
+import * as MediaLibrary from 'expo-media-library';
 
 export default function App() {
   const ref = useRef(null);
@@ -14,6 +15,10 @@ export default function App() {
       const { status } = await Camera.requestCameraPermissionsAsync();
       setHasPermission(status === 'granted');
     })();
+    (async () => {
+      const { status } = await MediaLibrary.requestPermissionsAsync();
+      setHasPermission(status === 'granted');
+    })();
   }, []);
 
   if (hasPermission === null) {
@@ -25,9 +30,16 @@ export default function App() {
 
   async function take() {
     if (ref) {
-      const data =  await ref.current.takePictureAsync();
+      const opt = {
+        quality: 0.8,
+        base64: true,
+        flexOrientation: true,
+        forceUpOrientation: true,
+      }
+      const data =  await ref.current.takePictureAsync(opt);
       setCaptured(data.uri);
       setOpen(true);
+      await MediaLibrary.saveToLibraryAsync(data.uri);
     }
   }
   return (
